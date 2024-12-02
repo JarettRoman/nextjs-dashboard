@@ -9,6 +9,7 @@ import {
 } from './definitions';
 import { formatCurrency } from './utils';
 import { db } from '@vercel/postgres';
+import { resolve } from 'path';
 
 export async function fetchRevenue() {
   const client = await db.connect();
@@ -35,6 +36,8 @@ export async function fetchRevenue() {
 export async function fetchLatestInvoices() {
   try {
     const client = await db.connect();
+
+    // await new Promise((resolve) => setTimeout(resolve, 4000));
 
     const data = await client.sql<LatestInvoiceRaw>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
@@ -100,10 +103,12 @@ export async function fetchFilteredInvoices(
   query: string,
   currentPage: number,
 ) {
+  const client = await db.connect();
+
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const invoices = await sql<InvoicesTable>`
+    const invoices = await client.sql<InvoicesTable>`
       SELECT
         invoices.id,
         invoices.amount,
@@ -124,6 +129,7 @@ export async function fetchFilteredInvoices(
       LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
     `;
 
+    client.release();
     return invoices.rows;
   } catch (error) {
     console.error('Database Error:', error);
@@ -132,8 +138,10 @@ export async function fetchFilteredInvoices(
 }
 
 export async function fetchInvoicesPages(query: string) {
+  const client = await db.connect();
+
   try {
-    const count = await sql`SELECT COUNT(*)
+    const count = await client.sql`SELECT COUNT(*)
     FROM invoices
     JOIN customers ON invoices.customer_id = customers.id
     WHERE
@@ -145,6 +153,7 @@ export async function fetchInvoicesPages(query: string) {
   `;
 
     const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+    client.release();
     return totalPages;
   } catch (error) {
     console.error('Database Error:', error);
