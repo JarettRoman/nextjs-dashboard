@@ -162,8 +162,9 @@ export async function fetchInvoicesPages(query: string) {
 }
 
 export async function fetchInvoiceById(id: string) {
+  const client = await db.connect();
   try {
-    const data = await sql<InvoiceForm>`
+    const data = await client.sql<InvoiceForm>`
       SELECT
         invoices.id,
         invoices.customer_id,
@@ -179,6 +180,7 @@ export async function fetchInvoiceById(id: string) {
       amount: invoice.amount / 100,
     }));
 
+    client.release();
     return invoice[0];
   } catch (error) {
     console.error('Database Error:', error);
@@ -187,8 +189,9 @@ export async function fetchInvoiceById(id: string) {
 }
 
 export async function fetchCustomers() {
+  const client = await db.connect();
   try {
-    const data = await sql<CustomerField>`
+    const data = await client.sql<CustomerField>`
       SELECT
         id,
         name
@@ -197,6 +200,7 @@ export async function fetchCustomers() {
     `;
 
     const customers = data.rows;
+    client.release();
     return customers;
   } catch (err) {
     console.error('Database Error:', err);
@@ -205,8 +209,9 @@ export async function fetchCustomers() {
 }
 
 export async function fetchFilteredCustomers(query: string) {
+  const client = await db.connect();
   try {
-    const data = await sql<CustomersTableType>`
+    const data = await client.sql<CustomersTableType>`
 		SELECT
 		  customers.id,
 		  customers.name,
@@ -230,6 +235,7 @@ export async function fetchFilteredCustomers(query: string) {
       total_paid: formatCurrency(customer.total_paid),
     }));
 
+    client.release();
     return customers;
   } catch (err) {
     console.error('Database Error:', err);
