@@ -181,6 +181,7 @@ export async function fetchInvoiceById(id: string) {
     }));
 
     client.release();
+    console.log(invoice);
     return invoice[0];
   } catch (error) {
     console.error('Database Error:', error);
